@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Đơn hàng của tôi</title>
+    <link rel="stylesheet" href="/wp-content/themes/elessi-theme/style.css" />
+    <link rel="stylesheet" href="/wp-content/themes/elessi-theme/style-elementor.css" />
+    <link rel="stylesheet" href="/wp-content/uploads/nasa-dynamic/dynamic.css" />
+    <style>
+      .ngoc-wrap {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 24px 14px 48px;
+      }
+      .ngoc-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin-bottom: 16px;
+      }
+      .ngoc-head h1 {
+        margin: 0;
+        font-size: 22px;
+        line-height: 1.2;
+      }
+      .ngoc-note {
+        font-size: 12px;
+        opacity: 0.75;
+        margin-top: 6px;
+      }
+      .ngoc-card {
+        background: #fff;
+        border: 1px solid rgba(0, 0, 0, 0.06);
+        border-radius: 14px;
+        padding: 16px;
+      }
+      .ngoc-msg {
+        display: none;
+        border-radius: 12px;
+        padding: 10px 12px;
+        margin: 0 0 16px;
+      }
+      .ngoc-msg.ok {
+        display: block;
+        background: rgba(46, 204, 113, 0.12);
+        border: 1px solid rgba(46, 204, 113, 0.35);
+      }
+      .ngoc-msg.err {
+        display: block;
+        background: rgba(231, 76, 60, 0.10);
+        border: 1px solid rgba(231, 76, 60, 0.35);
+      }
+      .ngoc-actions {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+      .ngoc-actions .button {
+        margin: 0;
+      }
+      .ngoc-modal {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.55);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 99999;
+        padding: 14px;
+      }
+      .ngoc-modal.open {
+        display: flex;
+      }
+      .ngoc-modal .box {
+        width: min(920px, 100%);
+        background: #fff;
+        border-radius: 14px;
+        padding: 14px;
+        max-height: 80vh;
+        overflow: auto;
+      }
+      .ngoc-modal .top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="ngoc-wrap woocommerce">
+      <div class="ngoc-head">
+        <div>
+          <h1>Đơn hàng của tôi</h1>
+          <div class="ngoc-note">Xem danh sách và chi tiết các đơn đã đặt theo email tài khoản.</div>
+        </div>
+        <div class="ngoc-actions">
+          <a class="button" href="/">Về trang chủ</a>
+          <a class="button" href="/profile/">Hồ sơ</a>
+          <button class="button" id="btnReload" type="button">Tải lại</button>
+        </div>
+      </div>
+
+      <div class="ngoc-msg" id="msg"></div>
+      <div class="ngoc-card" id="app">
+        <p>Đang tải…</p>
+      </div>
+    </div>
+
+    <div class="ngoc-modal" id="modal">
+      <div class="box">
+        <div class="top">
+          <strong id="modalTitle">Chi tiết đơn</strong>
+          <button class="button" id="btnClose" type="button">Đóng</button>
+        </div>
+        <div id="modalBody"></div>
+      </div>
+    </div>
+
+    <script src="/assets/js/ngoc-orders.js"></script>
+  </body>
+</html>
+

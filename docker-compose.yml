@@ -1,0 +1,17 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: ngocclothes-mysql
+    command: --default-authentication-plugin=mysql_native_password
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: ngoc_clothes
+    ports:
+      - "3306:3306"
+    volumes:
+      - ngocclothes_mysql:/var/lib/mysql
+
+volumes:
+  ngocclothes_mysql:
+

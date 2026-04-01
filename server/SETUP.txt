@@ -1,0 +1,30 @@
+Triển khai nhanh — Ngoc's clothes
+================================
+
+1) Bật MySQL:
+   - Cách A (khuyến nghị): dùng Docker:
+     docker compose up -d
+     (MySQL: user=root, pass=root, db=ngoc_clothes)
+
+   - Cách B: cài MySQL trên máy và tạo database:
+     mysql -u root -p -e "CREATE DATABASE ngoc_clothes CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+     mysql -u root -p ngoc_clothes < schema.sql
+
+2) File môi trường:
+   - `server/.env` đã được tạo sẵn cho Docker MySQL.
+   - Nếu bạn dùng MySQL cài trên máy, chỉnh lại MYSQL_* trong `server/.env`.
+
+3) Trong thư mục server:
+   npm install
+   npm run seed
+   npm start
+
+4) Mở trình duyệt:
+   - Cửa hàng (HTML tĩnh + API): http://127.0.0.1:5000/
+   - Quản trị (Mazer + Ngoc):  http://127.0.0.1:5050/  (file build trong thư mục admin/dist)
+   Đăng nhập: xem ADMIN_EMAIL / ADMIN_PASSWORD trong .env (mặc định seed: admin@ngoc.local / Admin@123)
+
+5) API trên cả hai cổng (cùng mã): /api/health , /api/products/public , ...
+
+6) Giao diện shop cũ (WordPress export) vẫn là file tĩnh; dữ liệu sản phẩm động nằm trong MySQL.
+   Có thể gắn script /assets/js/ngoc-storefront.js và gọi NgocStorefront.products() để hiển thị SP từ API.

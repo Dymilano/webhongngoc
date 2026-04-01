@@ -1,0 +1,26 @@
+# Node
+**/node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Env / secrets
+**/.env
+**/.env.*
+!**/.env.example
+
+# Databases / local data
+**/*.sqlite
+**/*.sqlite3
+server/data/
+
+# Uploads / generated assets
+website/uploads/
+server/uploads/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+

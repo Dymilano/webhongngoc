@@ -438,6 +438,44 @@ if (USE_DB && DB_DIALECT === 'mysql') {
         setting_key TEXT PRIMARY KEY,
         setting_value TEXT
       );
+      CREATE TABLE IF NOT EXISTS cms_posts (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        type TEXT NOT NULL DEFAULT 'post',
+        title TEXT NOT NULL,
+        slug TEXT NOT NULL UNIQUE,
+        excerpt TEXT,
+        body TEXT,
+        image_url TEXT,
+        sort_order INTEGER NOT NULL DEFAULT 0,
+        published INTEGER NOT NULL DEFAULT 1,
+        created_at TEXT NOT NULL DEFAULT (datetime('now')),
+        updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+      );
+      CREATE TABLE IF NOT EXISTS product_reviews (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        product_id INTEGER NOT NULL,
+        user_id INTEGER,
+        author_name TEXT NOT NULL,
+        email TEXT,
+        rating INTEGER NOT NULL DEFAULT 5,
+        comment TEXT,
+        approved INTEGER NOT NULL DEFAULT 0,
+        created_at TEXT NOT NULL DEFAULT (datetime('now')),
+        FOREIGN KEY(product_id) REFERENCES products(id) ON DELETE CASCADE
+      );
+      CREATE TABLE IF NOT EXISTS coupons (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        code TEXT NOT NULL UNIQUE,
+        discount_type TEXT NOT NULL DEFAULT 'percent',
+        discount_value REAL NOT NULL DEFAULT 0,
+        min_order REAL NOT NULL DEFAULT 0,
+        max_uses INTEGER,
+        used_count INTEGER NOT NULL DEFAULT 0,
+        starts_at TEXT,
+        ends_at TEXT,
+        active INTEGER NOT NULL DEFAULT 1,
+        created_at TEXT NOT NULL DEFAULT (datetime('now'))
+      );
     `);
 
     // Lightweight migrations for existing DB files
@@ -489,46 +527,7 @@ if (USE_DB && DB_DIALECT === 'mysql') {
       await db.exec(`UPDATE users SET updated_at = datetime('now') WHERE updated_at IS NULL OR TRIM(updated_at) = ''`);
     } catch (_) {}
 
-    await db.exec(`
-      CREATE TABLE IF NOT EXISTS cms_posts (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        type TEXT NOT NULL DEFAULT 'post',
-        title TEXT NOT NULL,
-        slug TEXT NOT NULL UNIQUE,
-        excerpt TEXT,
-        body TEXT,
-        image_url TEXT,
-        sort_order INTEGER NOT NULL DEFAULT 0,
-        published INTEGER NOT NULL DEFAULT 1,
-        created_at TEXT NOT NULL DEFAULT (datetime('now')),
-        updated_at TEXT NOT NULL DEFAULT (datetime('now'))
-      );
-      CREATE TABLE IF NOT EXISTS product_reviews (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        product_id INTEGER NOT NULL,
-        user_id INTEGER,
-        author_name TEXT NOT NULL,
-        email TEXT,
-        rating INTEGER NOT NULL DEFAULT 5,
-        comment TEXT,
-        approved INTEGER NOT NULL DEFAULT 0,
-        created_at TEXT NOT NULL DEFAULT (datetime('now')),
-        FOREIGN KEY(product_id) REFERENCES products(id) ON DELETE CASCADE
-      );
-      CREATE TABLE IF NOT EXISTS coupons (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        code TEXT NOT NULL UNIQUE,
-        discount_type TEXT NOT NULL DEFAULT 'percent',
-        discount_value REAL NOT NULL DEFAULT 0,
-        min_order REAL NOT NULL DEFAULT 0,
-        max_uses INTEGER,
-        used_count INTEGER NOT NULL DEFAULT 0,
-        starts_at TEXT,
-        ends_at TEXT,
-        active INTEGER NOT NULL DEFAULT 1,
-        created_at TEXT NOT NULL DEFAULT (datetime('now'))
-      );
-    `);
+    // (tables cms_posts/product_reviews/coupons đã được tạo ở bước đầu)
   }
 
   // initialize once

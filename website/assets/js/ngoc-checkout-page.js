@@ -284,10 +284,14 @@
   }
 
   function render(host, state) {
-    const { lines, count, subtotal } = state;
+    const { lines, count, subtotal, unknownProductCount } = state;
     const shippingFee = 0;
     const discount = Number(state.discount || 0);
     const total = Math.max(0, subtotal + shippingFee - discount);
+    const warnMissing =
+      unknownProductCount > 0
+        ? `<div class="ngoc-alert err" style="display:block;margin-bottom:12px">Một số sản phẩm chưa có trong CSDL — tạm tính có thể thiếu. Trong thư mục <code style="font-size:12px">server</code> chạy <code style="font-size:12px">npm run seed</code> rồi tải lại. (${unknownProductCount} dòng thiếu)</div>`
+        : '';
 
     const sumLines = lines
       .slice(0, 6)
@@ -297,16 +301,24 @@
         const name = p ? String(p.name || '') : `Sản phẩm #${it.legacy_wp_id}`;
         const img = p && p.image_url ? String(p.image_url) : '';
         const unit = p ? (p.sale_price != null ? Number(p.sale_price) : Number(p.price)) : 0;
-        const lineTotal = unit * Number(it.quantity || 1);
+        const lineTotal = p ? unit * Number(it.quantity || 1) : null;
+        const unitStr = p ? money(unit) : 'Chưa có trong CSDL';
+        const lineStr = p ? money(lineTotal) : '—';
         return `
           <div class="ngoc-sum-line">
             <div class="ngoc-sum-img">${img ? `<img src="${escapeHtml(img)}" alt="${escapeHtml(name)}" loading="lazy" />` : ''}</div>
             <div>
               <div class="ngoc-sum-name">${escapeHtml(name)}</div>
-              <div class="ngoc-sum-meta">SL: ${escapeHtml(it.quantity)} • ${escapeHtml(money(unit))}</div>
+              <div class="ngoc-sum-meta">SL: ${escapeHtml(it.quantity)} • ${
+          p
+            ? escapeHtml(unitStr)
+            : '<span style="color:#b45309;font-weight:600">' + escapeHtml(unitStr) + '</span>'
+        }</div>
             </div>
             <div class="ngoc-sum-right">
-              <div class="ngoc-sum-name">${escapeHtml(money(lineTotal))}</div>
+              <div class="ngoc-sum-name">${
+                p ? escapeHtml(lineStr) : '<span style="color:#b45309">' + escapeHtml(lineStr) + '</span>'
+              }</div>
             </div>
           </div>
         `;
@@ -323,6 +335,7 @@
           </div>
           <span class="ngoc-pill">${escapeHtml(count)} sản phẩm</span>
         </div>
+        ${warnMissing}
 
         <div class="ngoc-grid">
           <section class="ngoc-card" aria-label="Thông tin thanh toán">
@@ -491,7 +504,8 @@
       const unit = p ? (p.sale_price != null ? Number(p.sale_price) : Number(p.price)) : 0;
       return s + unit * Number(x.item.quantity || 1);
     }, 0);
-    return { lines, count, subtotal, discount: 0 };
+    const unknownProductCount = lines.reduce((n, x) => n + (x.product ? 0 : 1), 0);
+    return { lines, count, subtotal, discount: 0, unknownProductCount };
   }
 
   function setSummary(host, st) {
@@ -618,6 +632,9 @@
           }
           if (sc && sc.items && sc.items.length) {
             cart = serverCartToLocalItems(sc);
+            try {
+              writeCart(cart);
+            } catch (_) {}
           }
         }
       }

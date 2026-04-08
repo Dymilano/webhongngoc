@@ -224,10 +224,14 @@
   }
 
   function renderCart(host, state) {
-    const { lines, subtotal, count } = state;
+    const { lines, subtotal, count, unknownProductCount } = state;
     const shipping = 0;
     const discount = 0;
     const total = Math.max(0, subtotal + shipping - discount);
+    const noticeMissing =
+      unknownProductCount > 0
+        ? `<ul class="woocommerce-error" role="alert"><li><strong>Chưa tải được giá sản phẩm</strong> — CSDL chưa có (hoặc chưa đăng) mã <code>legacy_wp_id</code> tương ứng. Trong thư mục <code>server</code> chạy <code>npm run seed</code> rồi tải lại trang. (Thiếu dữ liệu: ${unknownProductCount} dòng)</li></ul>`
+        : '';
 
     const itemsHtml = lines
       .map((x) => {
@@ -237,8 +241,10 @@
         const unit = p ? (p.sale_price != null ? Number(p.sale_price) : Number(p.price)) : 0;
         const img = p && p.image_url ? String(p.image_url) : '';
         const variant = it && it.variant ? String(it.variant) : '';
-        const lineTotal = unit * Number(it.quantity || 1);
+        const lineTotal = p ? unit * Number(it.quantity || 1) : null;
         const detailUrl = p && p.slug ? `/product/${p.slug}/` : '#';
+        const unitHtml = p ? money(unit) : '<span class="ngoc-price-missing">Chưa có trong CSDL</span>';
+        const lineTotalHtml = p ? money(lineTotal) : '<span class="ngoc-price-missing">—</span>';
 
         return `
           <article class="ngoc-line ngoc-card" data-id="${escapeHtml(it.legacy_wp_id)}">
@@ -258,6 +264,7 @@
                       name
                     )}</a>
                     ${variant ? `<div class="ngoc-line-variant">${escapeHtml(variant)}</div>` : ''}
+                    ${p ? '' : `<div class="ngoc-line-variant" style="color:#b45309">ID WP: ${escapeHtml(it.legacy_wp_id)} — cần seed/import sản phẩm</div>`}
                   </div>
                   <button class="ngoc-icon-btn ngoc-remove" type="button" aria-label="Xóa sản phẩm" title="Xóa" data-id="${escapeHtml(
                     it.legacy_wp_id
@@ -266,7 +273,7 @@
 
                 <div class="ngoc-line-bottom">
                   <div class="ngoc-price">
-                    <div class="ngoc-unit">${money(unit)}</div>
+                    <div class="ngoc-unit">${unitHtml}</div>
                     <div class="ngoc-micro">Đơn giá</div>
                   </div>
 
@@ -279,7 +286,7 @@
                   </div>
 
                   <div class="ngoc-subtotal">
-                    <div class="ngoc-line-total">${money(lineTotal)}</div>
+                    <div class="ngoc-line-total">${lineTotalHtml}</div>
                     <div class="ngoc-micro">Thành tiền</div>
                   </div>
                 </div>
@@ -300,7 +307,7 @@
           </div>
         </div>
 
-        <div id="ngoc-cart-page-notices" class="woocommerce-notices-wrapper"></div>
+        <div id="ngoc-cart-page-notices" class="woocommerce-notices-wrapper">${noticeMissing}</div>
 
         <div class="ngoc-cart-grid">
         <section class="ngoc-cart-left" aria-label="Danh sách sản phẩm">
@@ -370,8 +377,9 @@
       const unit = p ? (p.sale_price != null ? Number(p.sale_price) : Number(p.price)) : 0;
       return s + unit * Number(x.item.quantity || 1);
     }, 0);
+    const unknownProductCount = lines.reduce((n, x) => n + (x.product ? 0 : 1), 0);
 
-    return { lines, count, subtotal };
+    return { lines, count, subtotal, unknownProductCount };
   }
 
   function mutateCart(fn) {

@@ -120,6 +120,8 @@ cd server
 npm run seed
 ```
 
+**Máy mới clone (SQLite):** nên chạy `npm run seed` ít nhất một lần để có sản phẩm và giá đúng trên giỏ/checkout. File `server/data/ngocclothes.sqlite` không có trên Git; nếu không seed thì copy file `.sqlite` từ máy đã chạy ổn.
+
 ### 4.6. Chạy web
 
 ```bash

@@ -188,12 +188,20 @@
       rows.push({ it, p });
     }
 
+    const missingCount = rows.filter((r) => !r.p).length;
+    const warn =
+      missingCount > 0
+        ? `<div class="woocommerce-error" role="alert"><ul><li>${missingCount} món chưa có trong CSDL — chạy <code>npm run seed</code> trong thư mục <code>server</code> rồi tải lại.</li></ul></div>`
+        : '';
+
     const lineHtml = rows
       .map(({ it, p }) => {
         const name = p ? String(p.name || '') : `Sản phẩm #${it.legacy_wp_id}`;
         const price = p ? (p.sale_price != null ? p.sale_price : p.price) : 0;
         const img = p && p.image_url ? `<img src="${p.image_url}" style="width:64px;height:auto;border-radius:6px" />` : '';
-        const total = Number(price || 0) * Number(it.quantity || 1);
+        const total = p ? Number(price || 0) * Number(it.quantity || 1) : null;
+        const priceCell = p ? money(price) : '<span style="color:#b45309;font-weight:600">Chưa có trong CSDL</span>';
+        const totalCell = p ? money(total) : '<span style="color:#b45309">—</span>';
         return `
           <tr>
             <td style="width:80px">${img}</td>
@@ -201,11 +209,11 @@
               <div><strong>${escapeHtml(name)}</strong></div>
               <div class="small text-muted">ID: ${it.legacy_wp_id}</div>
             </td>
-            <td>${money(price)}</td>
+            <td>${priceCell}</td>
             <td style="width:120px">
               <input type="number" min="1" class="ngoc-qty" data-id="${it.legacy_wp_id}" value="${it.quantity}" style="width:90px">
             </td>
-            <td>${money(total)}</td>
+            <td>${totalCell}</td>
             <td style="width:110px"><button class="button ngoc-remove" data-id="${it.legacy_wp_id}">Xóa</button></td>
           </tr>
         `;
@@ -220,6 +228,7 @@
     host.innerHTML = `
       <div class="woocommerce">
         <h2>Giỏ hàng</h2>
+        ${warn}
         <div class="table-responsive">
           <table class="shop_table shop_table_responsive">
             <thead><tr><th></th><th>Sản phẩm</th><th>Giá</th><th>SL</th><th>Tạm tính</th><th></th></tr></thead>
@@ -254,20 +263,24 @@
       return;
     }
     let subtotal = 0;
+    let missingLines = 0;
     for (const x of cart) {
       const p = await fetchProductByLegacy(x.legacy_wp_id);
       if (!p) {
-        host.innerHTML =
-          '<div class="woocommerce"><p class="woocommerce-error">Không tải được giá sản phẩm (kiểm tra API).</p></div>';
-        return;
+        missingLines += 1;
+        continue;
       }
       const unit = p.sale_price != null ? Number(p.sale_price) : Number(p.price);
       subtotal += unit * x.quantity;
     }
+    const coWarn =
+      missingLines > 0
+        ? `<div class="woocommerce-error" role="alert"><ul><li>${missingLines} món chưa có trong CSDL — tạm tính có thể thiếu. Chạy <code>npm run seed</code> trong <code>server</code>.</li></ul></div>`
+        : '';
     host.innerHTML = `
       <div class="woocommerce">
         <h2>Thanh toán</h2>
-        <div class="woocommerce-notices-wrapper"></div>
+        <div class="woocommerce-notices-wrapper">${coWarn}</div>
         <form id="ngoc-checkout-form">
           <p><strong>Tạm tính:</strong> <span id="ngoc-co-sub">${money(subtotal)}</span></p>
           <p><label>Mã giảm giá</label><br>

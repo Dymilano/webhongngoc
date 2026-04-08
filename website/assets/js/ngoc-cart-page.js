@@ -124,6 +124,26 @@
     return r.json().catch(() => null);
   }
 
+  /** Bổ sung tên/giá khi API giỏ có dòng nhưng product embed thiếu (DB lệch, JOIN null). */
+  async function hydrateProductsFromApi(cart, productsByLegacy) {
+    const ids = Array.from(
+      new Set(
+        (cart || [])
+          .map((x) => (x && Number.isFinite(Number(x.legacy_wp_id)) ? String(x.legacy_wp_id) : null))
+          .filter((x) => x != null)
+      )
+    );
+    await Promise.all(
+      ids.map(async (key) => {
+        if (productsByLegacy[key]) return;
+        try {
+          const p = await fetchProductByLegacy(key);
+          if (p) productsByLegacy[key] = p;
+        } catch (_) {}
+      })
+    );
+  }
+
   function renderSkeleton(host) {
     host.innerHTML = `
       <div class="ngoc-cart-shell">
@@ -460,6 +480,7 @@
       if (!items.length) return renderEmpty(host);
       const productsByLegacy = buildProductsByLegacyFromServerItems(items);
       const cart = buildLocalCartFromServerItems(items);
+      await hydrateProductsFromApi(cart, productsByLegacy);
       const st = computeState(cart, productsByLegacy);
       renderCart(host, st);
       bindHandlersServer(host, items);
@@ -467,8 +488,10 @@
 
     const findCartItemIdByLegacy = (legacyId) => {
       const hit = (serverItems || []).find((x) => {
-        const p = x && x.product ? x.product : null;
-        const legacy = p && p.legacy_wp_id != null ? p.legacy_wp_id : null;
+        if (!x) return false;
+        const p = x.product || null;
+        const legacy =
+          p && p.legacy_wp_id != null ? p.legacy_wp_id : x.legacy_wp_id != null ? x.legacy_wp_id : null;
         return String(legacy) === String(legacyId);
       });
       return hit ? hit.cart_item_id : null;
@@ -568,16 +591,45 @@
     const token = getToken();
     if (token) {
       try {
-        const d = await apiCart('GET', '/cart', null);
-        const items = d && d.items ? d.items : [];
-        if (!items.length) return renderEmpty(host);
-        const productsByLegacy = buildProductsByLegacyFromServerItems(items);
-        const cart = buildLocalCartFromServerItems(items);
-        const st = computeState(cart, productsByLegacy);
-        if (!st.lines.length) return renderEmpty(host);
-        renderCart(host, st);
-        bindHandlersServer(host, items);
-        return;
+        let d = await apiCart('GET', '/cart', null);
+        let items = d && d.items ? d.items : [];
+        const localSnapshot = readCart();
+        // "Thêm vào giỏ" (ngoc-commerce.js) chỉ ghi localStorage; khi đã đăng nhập trang này
+        // trước đây chỉ đọc giỏ server → badge có số nhưng nội dung trống. Đồng bộ local → server.
+        if (!items.length && localSnapshot.length) {
+          try {
+            await apiCart('PUT', '/cart', {
+              items: localSnapshot.map((x) => ({
+                legacy_wp_id: x.legacy_wp_id,
+                quantity: normalizeQty(x.quantity)
+              }))
+            });
+            d = await apiCart('GET', '/cart', null);
+            items = d && d.items ? d.items : [];
+            if (items.length) {
+              writeCart(
+                buildLocalCartFromServerItems(items).map((x) => ({
+                  legacy_wp_id: x.legacy_wp_id,
+                  quantity: x.quantity
+                }))
+              );
+            }
+          } catch (_) {
+            /* giữ items rỗng, sẽ rơi xuống nhánh localStorage bên dưới */
+          }
+        }
+        if (items.length) {
+          const productsByLegacy = buildProductsByLegacyFromServerItems(items);
+          const cart = buildLocalCartFromServerItems(items);
+          await hydrateProductsFromApi(cart, productsByLegacy);
+          const st = computeState(cart, productsByLegacy);
+          if (st.lines.length) {
+            renderCart(host, st);
+            bindHandlersServer(host, items);
+            return;
+          }
+          /* Payload server không tạo được dòng (DB/API lệch) trong khi localStorage vẫn có hàng → không renderEmpty */
+        }
       } catch (e) {
         // fall back to local cart if API is not available for any reason
       }

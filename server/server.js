@@ -22,6 +22,16 @@ function createShopApp(staticDir) {
   const app = express();
   app.use('/api', apiRouter);
   app.use('/uploads', express.static(path.join(SHOP_DIR, 'uploads'), { index: false }));
+  // Theme WooCommerce (export tĩnh) vẫn gọi `/?wc-ajax=...` — không có WordPress → trả stub, tránh 404 trong Network.
+  app.get('/', (req, res, next) => {
+    const wa = req.query && req.query['wc-ajax'];
+    if (!wa) return next();
+    res.type('json');
+    if (wa === 'get_refreshed_fragments') {
+      return res.status(200).json({ fragments: {}, cart_hash: '' });
+    }
+    return res.status(200).json({ success: false });
+  });
   // Bản export tĩnh không có thư mục /shop/ (WooCommerce archive); chuyển tới danh mục có sẵn
   app.get(['/shop', '/shop/'], (req, res) => {
     res.redirect(302, '/product-category/woman/');

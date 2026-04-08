@@ -600,8 +600,26 @@
       let cart = readCart();
       const token = getToken();
       if (token) {
-        const sc = await fetchServerCart();
-        if (sc && Array.isArray(sc.items)) cart = serverCartToLocalItems(sc);
+        let sc = await fetchServerCart();
+        if (sc && Array.isArray(sc.items)) {
+          if (sc.items.length === 0 && cart.length > 0) {
+            try {
+              await apiJson('/cart', {
+                method: 'PUT',
+                body: JSON.stringify({
+                  items: cart.map((x) => ({
+                    legacy_wp_id: x.legacy_wp_id,
+                    quantity: normalizeQty(x.quantity)
+                  }))
+                })
+              });
+              sc = await fetchServerCart();
+            } catch (_) {}
+          }
+          if (sc && sc.items && sc.items.length) {
+            cart = serverCartToLocalItems(sc);
+          }
+        }
       }
       if (!cart.length) return renderEmpty(host);
 
@@ -657,10 +675,31 @@
     let cart = readCart();
     let productsByLegacy = null;
     if (token) {
-      const sc = await fetchServerCart();
+      let sc = await fetchServerCart();
       if (sc && Array.isArray(sc.items)) {
-        productsByLegacy = serverProductsByLegacy(sc);
-        cart = serverCartToLocalItems(sc);
+        if (sc.items.length === 0 && cart.length > 0) {
+          try {
+            await apiJson('/cart', {
+              method: 'PUT',
+              body: JSON.stringify({
+                items: cart.map((x) => ({
+                  legacy_wp_id: x.legacy_wp_id,
+                  quantity: normalizeQty(x.quantity)
+                }))
+              })
+            });
+            sc = await fetchServerCart();
+            if (sc && sc.items && sc.items.length) {
+              writeCart(serverCartToLocalItems(sc));
+            }
+          } catch (_) {
+            /* dùng cart local đã đọc */
+          }
+        }
+        if (sc && sc.items && sc.items.length) {
+          productsByLegacy = serverProductsByLegacy(sc);
+          cart = serverCartToLocalItems(sc);
+        }
       }
     }
     if (!cart.length) return renderEmpty(host);

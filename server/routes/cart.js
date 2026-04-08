@@ -53,9 +53,13 @@ async function getCartPayload(userId) {
     .filter((r) => r && Number(r.quantity) > 0)
     .map((r) => {
       const unit = r.sale_price != null ? Number(r.sale_price) : Number(r.price || 0);
+      const legacyRaw = r.legacy_wp_id;
+      const legacyNum =
+        legacyRaw == null || legacyRaw === '' ? null : Number(legacyRaw);
       return {
         cart_item_id: r.cart_item_id,
         quantity: Number(r.quantity || 1),
+        legacy_wp_id: Number.isFinite(legacyNum) ? legacyNum : null,
         product: r && r.name ? {
           id: r.product_id,
           legacy_wp_id: r.legacy_wp_id,

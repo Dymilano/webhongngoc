@@ -4,7 +4,7 @@ const { pool, ready } = require('./lib/db');
 
 async function main() {
   await ready;
-  const dialect = String(process.env.DB_DIALECT || 'mysql').toLowerCase();
+  const dialect = String(process.env.DB_DIALECT || 'sqlite').toLowerCase();
   const isMysql = dialect === 'mysql';
   const email = process.env.ADMIN_EMAIL || 'admin@ngoc.local';
   const password = process.env.ADMIN_PASSWORD || 'Admin@123';

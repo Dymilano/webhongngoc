@@ -1,7 +1,7 @@
 require('dotenv').config();
 
 const USE_DB = String(process.env.USE_DB || '0') === '1';
-const DB_DIALECT = String(process.env.DB_DIALECT || 'mysql').toLowerCase();
+const DB_DIALECT = String(process.env.DB_DIALECT || 'sqlite').toLowerCase();
 
 function disabledError() {
   const e = new Error('DB_DISABLED');

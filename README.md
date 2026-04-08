@@ -18,7 +18,7 @@ Phù hợp làm đồ án, public GitHub và onboarding dev mới.
 
 ### Database
 
-- **MySQL** (khuyến nghị production) hoặc **SQLite** (dev nhanh)
+- **SQLite** mặc định khi cài nhanh / clone; **MySQL** tuỳ chọn (thường cho production)
 - Tự migrate nhẹ khi chạy server (xem `server/lib/db.js`)
 
 ### Thư viện chính
@@ -81,14 +81,27 @@ Các biến quan trọng:
 
 - `PORT_SHOP=5000` / `PORT_ADMIN=5050`
 - `USE_DB=1` để bật DB
-- `DB_DIALECT=mysql` hoặc `sqlite`
+- `DB_DIALECT`: **`sqlite` là mặc định trong code** nếu không set biến môi trường; đặt `mysql` khi dùng MySQL
+- `SQLITE_PATH=./data/ngocclothes.sqlite` (khi dùng SQLite)
 - `JWT_SECRET` (bắt buộc dùng chuỗi mạnh khi deploy)
 - `JWT_ACCESS_EXPIRES` (mặc định `15m` nếu không set)
 - `JWT_REFRESH_DAYS` (mặc định `30`)
 
 ### 4.4. Chạy database
 
-#### Option A — MySQL bằng Docker (khuyến nghị)
+#### Mặc định — SQLite (dev, clone nhanh)
+
+File `server/.env.example` đã cấu hình SQLite. Sau `copy .env.example .env`, giữ:
+
+```env
+USE_DB=1
+DB_DIALECT=sqlite
+SQLITE_PATH=./data/ngocclothes.sqlite
+```
+
+Server sẽ tạo/migrate file SQLite trong `server/data/` khi chạy.
+
+#### Tuỳ chọn — MySQL (Docker / production)
 
 Ở thư mục root:
 
@@ -96,21 +109,11 @@ Các biến quan trọng:
 docker compose up -d
 ```
 
-Import schema:
+Trong `server/.env` đặt `DB_DIALECT=mysql` và các biến `MYSQL_*`. Import schema:
 
 ```bash
 cd server
 mysql -u root -proot ngoc_clothes < schema.sql
-```
-
-#### Option B — SQLite (dev nhanh)
-
-Trong `server/.env`:
-
-```env
-USE_DB=1
-DB_DIALECT=sqlite
-SQLITE_PATH=./data/ngocclothes.sqlite
 ```
 
 ### 4.5. (Optional) Seed dữ liệu

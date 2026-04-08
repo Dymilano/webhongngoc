@@ -5,7 +5,7 @@ const { requireAuth, requireAdmin } = require('../middleware/auth');
 const router = express.Router();
 
 function ordersSince14DaysSql() {
-  const d = String(DB_DIALECT || 'mysql').toLowerCase();
+  const d = String(DB_DIALECT || 'sqlite').toLowerCase();
   if (d === 'sqlite') {
     return `created_at >= datetime('now','-14 day')`;
   }

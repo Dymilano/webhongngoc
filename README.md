@@ -116,14 +116,27 @@ cd server
 mysql -u root -proot ngoc_clothes < schema.sql
 ```
 
-### 4.5. (Optional) Seed dữ liệu
+### 4.5. Dữ liệu sản phẩm (seed + đồng bộ site tĩnh)
+
+**Tài khoản admin / cài đặt cơ bản:**
 
 ```bash
 cd server
 npm run seed
 ```
 
-**Máy mới clone (SQLite):** nên chạy `npm run seed` ít nhất một lần để có sản phẩm và giá đúng trên giỏ/checkout. File `server/data/ngocclothes.sqlite` không có trên Git; nếu không seed thì copy file `.sqlite` từ máy đã chạy ổn.
+`seed` chỉ thêm **vài sản phẩm mẫu** (`legacy_wp_id` kiểu 1273–1275). Trang shop tĩnh dùng **ID WordPress thật** (ví dụ 958, 490, 560) trong nút “Thêm vào giỏ”. Nếu trong DB **không có** đúng `legacy_wp_id` đó, giỏ sẽ báo *“Chưa có trong CSDL”* — **không phải lỗi cài Node**, mà là **giỏ và DB chưa khớp**.
+
+**Khuyến nghị sau khi clone:** đồng bộ toàn bộ sản phẩm từ thư mục `website/` vào SQLite (đúng ID như HTML):
+
+```bash
+cd server
+npm run sync:website
+```
+
+(Sau đó restart `npm start` nếu cần.) Hoặc: xóa giỏ (localStorage trình duyệt / nút xóa) rồi thêm lại hàng **sau** khi đã `sync:website`.
+
+File `server/data/ngocclothes.sqlite` không có trên Git; có thể **copy file `.sqlite` từ máy đã chạy đủ dữ liệu** thay cho seed/sync.
 
 ### 4.6. Chạy web
 
